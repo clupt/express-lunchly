@@ -17,6 +17,13 @@ router.get("/", async function (req, res, next) {
   return res.render("customer_list.html", { customers });
 });
 
+/** Search for customer by name. */
+
+router.get("/search", async function (req, res, next) {
+  const customer = await Customer.getByName(req.query.search);
+  return res.render("customer_detail.html", { customer });
+});
+
 /** Form to add a new customer. */
 
 router.get("/add/", async function (req, res, next) {

@@ -12,6 +12,7 @@ class Customer {
     this.id = id;
     this.firstName = firstName;
     this.lastName = lastName;
+    this.fullName = this.getFullName();
     this.phone = phone;
     this.notes = notes;
   }
@@ -56,6 +57,37 @@ class Customer {
     return new Customer(customer);
   }
 
+  /** get a customer by name */
+
+  static async getByName(fullName) {
+    const names = fullName.split(' ');
+    const firstName = names[0];
+    const lastName = names[1];
+
+    const customers = await db.query(
+      `SELECT id,
+              first_name AS "firstName",
+              last_name  AS "lastName",
+              phone,
+              notes
+      FROM customers
+      WHERE first_name = $1 AND last_name = $2`,
+      [firstName, lastName]
+    );
+    const customer = customers.rows[0];
+
+    // const customers = await Customer.all();
+    // const customer = customers.find(c => c.firstName === firstName & c.lastName === lastName);
+
+    if (customer === undefined) {
+      const err = new Error(`No such customer: ${fullName}`);
+      err.status = 404;
+      throw err;
+    }
+
+    return new Customer(customer);
+  }
+
   /** get all reservations for this customer. */
 
   async getReservations() {
@@ -90,6 +122,12 @@ class Customer {
       );
     }
   }
+
+  /** return full name */
+  getFullName() {
+    return this.firstName + ' ' + this.lastName;
+  }
 }
+
 
 module.exports = Customer;
