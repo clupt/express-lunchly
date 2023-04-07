@@ -21,18 +21,15 @@ router.get("/", async function (req, res, next) {
 
 router.get("/search", async function (req, res, next) {
   const customers = await Customer.getByName(req.query.search);
-  console.log("requerysearch+", req.query.search);
   return res.render("customer_list.html", { customers });
 });
 
 /** Get top ten customers. */
-router.get("/top-ten", async function(req, res, next){
-  const customers = await Customer.getBestCustomers();
-  console.log("customers in route=", customers);
-  return res.render("customer_list.html", { customers });
-})
 
-//TODO: make a top ten template page and render that
+router.get("/top-ten", async function (req, res, next) {
+  const customers = await Customer.getBestCustomers();
+  return res.render("customer_top_ten.html", { customers });
+});
 
 /** Form to add a new customer. */
 
@@ -57,7 +54,6 @@ router.post("/add/", async function (req, res, next) {
 
 router.get("/:id/", async function (req, res, next) {
   const customer = await Customer.get(req.params.id);
-
   const reservations = await customer.getReservations();
 
   return res.render("customer_detail.html", { customer, reservations });

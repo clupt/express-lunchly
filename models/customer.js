@@ -60,17 +60,7 @@ class Customer {
   /** get a customer by name */
 
   static async getByName(searchName) {
-    // const firstNameOnly = searchName + "%";
-    // const lastNameOnly = "%" + searchName;
-    // const fullName = searchName.split(' ');
-    // const firstName = fullName[0] + "%";
-    // const lastName = "%" + fullName[1];
-    // console.log("firstName=", firstName, "lastName=", lastName);
 
-
-    // console.log("firstName=", firstName);
-
-    //TODO: rewrite it using ILIKE
     const results = await db.query(
       `SELECT id,
               first_name AS "firstName",
@@ -82,15 +72,7 @@ class Customer {
       [`%${searchName}%`]
     );
 
-
     const customers = results.rows;
-
-    if (!customers.length) {
-      const err = new Error(`No such customer: ${searchName}`);
-      err.status = 404;
-      throw err;
-    }
-    //TODO: dont throw error when search doesnt find an input
 
     return customers.map(c => new Customer(c));
   }
@@ -131,11 +113,13 @@ class Customer {
   }
 
   /** return full name */
+
   getFullName() {
     return this.firstName + ' ' + this.lastName;
   }
 
   /** Get best customers */
+
   static async getBestCustomers() {
     const results = await db.query(
       `SELECT
@@ -154,10 +138,6 @@ class Customer {
     const customers = results.rows;
     console.log("customers=", customers);
 
-    if (!customers.length) {
-      return customers;
-    }
-    //TODO: send to top ten template
     return customers.map(c => new Customer(c));
   }
 }
