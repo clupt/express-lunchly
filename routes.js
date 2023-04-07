@@ -20,9 +20,19 @@ router.get("/", async function (req, res, next) {
 /** Search for customer by name. */
 
 router.get("/search", async function (req, res, next) {
-  const customer = await Customer.getByName(req.query.search);
-  return res.render("customer_detail.html", { customer });
+  const customers = await Customer.getByName(req.query.search);
+  console.log("requerysearch+", req.query.search);
+  return res.render("customer_list.html", { customers });
 });
+
+/** Get top ten customers. */
+router.get("/top-ten", async function(req, res, next){
+  const customers = await Customer.getBestCustomers();
+  console.log("customers in route=", customers);
+  return res.render("customer_list.html", { customers });
+})
+
+//TODO: make a top ten template page and render that
 
 /** Form to add a new customer. */
 

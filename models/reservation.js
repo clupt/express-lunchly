@@ -52,6 +52,7 @@ class Reservation {
       );
       this.id = result.rows[0].id;
     } else {
+      //TODO: we won't be editing the customer ID here
       await db.query(
             `UPDATE reservations
              SET customer_id=$1,

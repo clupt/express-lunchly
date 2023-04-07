@@ -21,7 +21,7 @@ class Customer {
 
   static async all() {
     const results = await db.query(
-          `SELECT id,
+      `SELECT id,
                   first_name AS "firstName",
                   last_name  AS "lastName",
                   phone,
@@ -36,14 +36,14 @@ class Customer {
 
   static async get(id) {
     const results = await db.query(
-          `SELECT id,
+      `SELECT id,
                   first_name AS "firstName",
                   last_name  AS "lastName",
                   phone,
                   notes
            FROM customers
            WHERE id = $1`,
-        [id],
+      [id],
     );
 
     const customer = results.rows[0];
@@ -59,33 +59,40 @@ class Customer {
 
   /** get a customer by name */
 
-  static async getByName(fullName) {
-    const names = fullName.split(' ');
-    const firstName = names[0];
-    const lastName = names[1];
+  static async getByName(searchName) {
+    // const firstNameOnly = searchName + "%";
+    // const lastNameOnly = "%" + searchName;
+    // const fullName = searchName.split(' ');
+    // const firstName = fullName[0] + "%";
+    // const lastName = "%" + fullName[1];
+    // console.log("firstName=", firstName, "lastName=", lastName);
 
-    const customers = await db.query(
+
+    // console.log("firstName=", firstName);
+
+    //TODO: rewrite it using ILIKE
+    const results = await db.query(
       `SELECT id,
               first_name AS "firstName",
               last_name  AS "lastName",
               phone,
               notes
       FROM customers
-      WHERE first_name = $1 AND last_name = $2`,
-      [firstName, lastName]
+      WHERE CONCAT(first_name, ' ' , last_name) ILIKE $1`,
+      [`%${searchName}%`]
     );
-    const customer = customers.rows[0];
 
-    // const customers = await Customer.all();
-    // const customer = customers.find(c => c.firstName === firstName & c.lastName === lastName);
 
-    if (customer === undefined) {
-      const err = new Error(`No such customer: ${fullName}`);
+    const customers = results.rows;
+
+    if (!customers.length) {
+      const err = new Error(`No such customer: ${searchName}`);
       err.status = 404;
       throw err;
     }
+    //TODO: dont throw error when search doesnt find an input
 
-    return new Customer(customer);
+    return customers.map(c => new Customer(c));
   }
 
   /** get all reservations for this customer. */
@@ -99,26 +106,26 @@ class Customer {
   async save() {
     if (this.id === undefined) {
       const result = await db.query(
-            `INSERT INTO customers (first_name, last_name, phone, notes)
+        `INSERT INTO customers (first_name, last_name, phone, notes)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
-          [this.firstName, this.lastName, this.phone, this.notes],
+        [this.firstName, this.lastName, this.phone, this.notes],
       );
       this.id = result.rows[0].id;
     } else {
       await db.query(
-            `UPDATE customers
+        `UPDATE customers
              SET first_name=$1,
                  last_name=$2,
                  phone=$3,
                  notes=$4
              WHERE id = $5`, [
-            this.firstName,
-            this.lastName,
-            this.phone,
-            this.notes,
-            this.id,
-          ],
+        this.firstName,
+        this.lastName,
+        this.phone,
+        this.notes,
+        this.id,
+      ],
       );
     }
   }
@@ -127,7 +134,32 @@ class Customer {
   getFullName() {
     return this.firstName + ' ' + this.lastName;
   }
-}
 
+  /** Get best customers */
+  static async getBestCustomers() {
+    const results = await db.query(
+      `SELECT
+          c.id,
+          first_name AS "firstName",
+          last_name AS "lastName",
+          phone,
+          c.notes
+        FROM customers AS c
+          JOIN reservations AS r on r.customer_id = c.id
+          GROUP BY c.id
+          ORDER BY COUNT(c.id) DESC
+          LIMIT 10
+      `
+    );
+    const customers = results.rows;
+    console.log("customers=", customers);
+
+    if (!customers.length) {
+      return customers;
+    }
+    //TODO: send to top ten template
+    return customers.map(c => new Customer(c));
+  }
+}
 
 module.exports = Customer;
